@@ -1,0 +1,79 @@
+import numpy as np
+
+# Set initial parameters
+w_0 = 0.5
+c = 0
+beta = 1
+eta = 0.8
+
+# Function to calculate firm i's objective
+def objective_i(pi, pj, eta, c, beta):
+    term1 = 0.5 * (pi - c)
+    term2 = 0.5 * (1 - eta * pi) * (1 - c) / (0.5 * (1 - eta * pi) + 0.5 * (1 - eta * pj))
+    return term1 + beta * term2
+
+# Function to calculate the gradient for objective_i
+def gradient_objective_i(pi, pj, eta, c, beta):
+    return 0.5 + eta * beta * (1 - c) * (eta * pj - 1) / ((2 - eta * (pi + pj))**2)
+
+# Function to calculate firm j's objective
+def objective_j(pi, pj, eta, c, beta):
+    term1 = 0.5 * (pj - c)
+    term2 = 0.5 * (1 - eta * pj) * (1 - c) / (0.5 * (1 - eta * pj) + 0.5 * (1 - eta * pi))
+    return term1 + beta * term2
+
+# Function to calculate the gradient for objective_j
+def gradient_objective_j(pi, pj, eta, c, beta):
+    return 0.5 + eta * beta * (1 - c) * (eta * pi - 1) / ((2 - eta * (pi + pj))**2)
+
+# Function to update pi and check convergence
+def update_pi(pi, pj, eta, c, beta, step_size, threshold, max_iterations):
+    iterations = 0
+    
+    while iterations < max_iterations:
+        old_pi = pi
+        pi = np.clip(pi + step_size * gradient_objective_i(pi, pj, eta, c, beta), 0, 1)
+        
+        # Check for convergence
+        if abs(pi - old_pi) < threshold:
+            break
+        
+        iterations += 1
+    
+    return pi
+
+# Function to update pj and check convergence
+def update_pj(pi, pj, eta, c, beta, step_size, threshold, max_iterations):
+    iterations = 0
+    
+    while iterations < max_iterations:
+        old_pj = pj
+        pj = np.clip(pj + step_size * gradient_objective_j(pi, pj, eta, c, beta), 0, 1)
+        
+        # Check for convergence
+        if abs(pj - old_pj) < threshold:
+            break
+        
+        iterations += 1
+    
+    return pj
+
+# Initial values
+pi = 0.99
+pj = 0.99
+
+# Convergence thresholds
+threshold = 0.005
+
+# Maximum number of iterations
+max_iterations = 1000
+
+# Update pi
+pi = update_pi(pi, pj, eta, c, beta, 0.05, threshold, max_iterations)
+
+# Update pj
+pj = update_pj(pi, pj, eta, c, beta, 0.05, threshold, max_iterations)
+
+# Final values of pi and pj
+final_pi = pi
+final_pj = pj
