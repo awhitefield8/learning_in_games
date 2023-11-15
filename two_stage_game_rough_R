@@ -1,0 +1,106 @@
+#set some initial parameters
+#this is only kind of done, it basically iterates to a solution for the two stage two player game (in R)
+w_0<-.5 
+c<-0
+beta<-1
+eta<-.8
+
+# Function to calculate firm i's objective
+objective_i <- function(pi, pj, eta, c, beta) {
+  term1 <- 0.5 * (pi - c)
+  term2 <- 0.5 * (1 - eta * pi) * (1 - c) / (0.5 * (1 - eta * pi) + 0.5 * (1 - eta * pj))
+  return(term1 + beta * term2)
+}
+
+gradient_objective_i<-function(pi, pj, eta, c, beta) {
+  .5+eta*beta*(1-c)*(eta*pj-1)/((2-eta*(pi+pj))^2)
+}
+
+# Function to calculate firm j's objective
+objective_j <- function(pi, pj, eta, c, beta) {
+  term1 <- 0.5 * (pj - c)
+  term2 <- 0.5 * (1 - eta * pj) * (1 - c) / (0.5 * (1 - eta * pj) + 0.5 * (1 - eta * pi))
+  return(term1 + beta * term2)
+}
+
+gradient_objective_j<-function(pi, pj, eta, c, beta) {
+  .5+eta*beta*(1-c)*(eta*pi-1)/((2-eta*(pi+pj))^2)
+}
+
+#initialize
+pi<-.99
+pj<-.99
+objective_i(pi,pj,eta,c,beta)
+gradient_objective_i(pi=.99,pj=.99,eta=.8,c=0,beta=1)
+
+# pi<-ifelse(pi+.05*gradient_objective_i(pi,pj,eta,c,beta)>=1,1,
+#            ifelse(pi+.05*gradient_objective_i(pi,pj,eta,c,beta)<=0,0,
+#                   pi+.05*gradient_objective_i(pi,pj,eta,c,beta)))
+# pi
+# pj<-ifelse(pj+.05*gradient_objective_j(pi,pj,eta,c,beta)>1,1,
+#            ifelse(pj+.05*gradient_objective_j(pi,pj,eta,c,beta)<0,0,
+#                   pj+.05*gradient_objective_j(pi,pj,eta,c,beta)))
+# pj
+
+
+# Function to update pi and check convergence
+update_pi <- function(pi, pj, eta, c, beta, step_size, threshold, max_iterations) {
+  iterations <- 0
+  
+  while (iterations < max_iterations) {
+    old_pi <- pi
+    pi <- ifelse(pi + step_size * gradient_objective_i(pi, pj, eta, c, beta) >= 1, 1,
+                 ifelse(pi + step_size * gradient_objective_i(pi, pj, eta, c, beta) <= 0, 0,
+                        pi + step_size * gradient_objective_i(pi, pj, eta, c, beta)))
+    
+    # Check for convergence
+    if (abs(pi - old_pi) < threshold) {
+      break
+    }
+    
+    iterations <- iterations + 1
+  }
+  
+  return(pi)
+}
+
+# Function to update pj and check convergence
+update_pj <- function(pi, pj, eta, c, beta, step_size, threshold, max_iterations) {
+  iterations <- 0
+  
+  while (iterations < max_iterations) {
+    old_pj <- pj
+    pj <- ifelse(pj + step_size * gradient_objective_j(pi, pj, eta, c, beta) > 1, 1,
+                 ifelse(pj + step_size * gradient_objective_j(pi, pj, eta, c, beta) < 0, 0,
+                        pj + step_size * gradient_objective_j(pi, pj, eta, c, beta)))
+    
+    # Check for convergence
+    if (abs(pj - old_pj) < threshold) {
+      break
+    }
+    
+    iterations <- iterations + 1
+  }
+  
+  return(pj)
+}
+
+# Initial values
+pi <- .99
+pj <- .99
+
+# Convergence thresholds
+threshold <- 0.005
+
+# Maximum number of iterations
+max_iterations <- 1000
+
+# Update pi
+pi <- update_pi(pi, pj, eta, c, beta, 0.05, threshold, max_iterations)
+
+# Update pj
+pj <- update_pj(pi, pj, eta, c, beta, 0.05, threshold, max_iterations)
+
+# Final values of pi and pj
+final_pi <- pi
+final_pj <- pj
