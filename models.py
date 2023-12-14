@@ -2,24 +2,29 @@ import numpy as np
 
 class Mw:
     """
-    multiplicative weights function
+    multiplicative weights object
     """
-    def __init__(self, n, nu):
+    def __init__(self, n=2, nu=0.2,weights=None):
         """
         Args,
             n (int): number of experts
             nu (float): learning rate
+            weights (np.array): array of weights
         """
         self.n = n
         self.nu = nu
-        self.weights = np.full(n, 1/n)
+        if weights is None:
+            self.weights = np.full(n, 1/n)
+        else:
+            self.weights = weights
     
     def update(self, c):
         """
         Args,
-            c (numpy array): cost vector
+            c (list): cost vector
         """
-        self.weights *= 1 - self.nu * c
+        cost_array = np.array(c)
+        self.weights *= 1 - self.nu * cost_array
         self.weights /= np.sum(self.weights)
 
 
