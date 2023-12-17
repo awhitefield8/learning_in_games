@@ -1,8 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt #plotting
 from scipy.interpolate import interp1d #functional interpolation
-
-
+from models import Mw
 
 
 
@@ -25,7 +24,7 @@ def inverse_mw(new_weight,old_weight,nu=0.1):
 def value_it_fixedComp(s_grid_,
                        p_grid_,
                        outsidePolicy=0.5,
-                       nu=0.2,
+                       eta=0.1,
                        beta=0.95,
                        max_iterations=2000):
 
@@ -47,8 +46,8 @@ def value_it_fixedComp(s_grid_,
     for it in range(max_iterations):
         interp_v_func = interp1d(s_grid, v_curr, kind='linear', fill_value='extrapolate')
 
-        new_weight_a = s_grid[:, np.newaxis] * (1 - nu * p_grid)
-        new_weight_b = (1 - s_grid[:, np.newaxis]) * (1 - nu * outsidePolicy)
+        new_weight_a = s_grid[:, np.newaxis] * (1 - eta * p_grid)
+        new_weight_b = (1 - s_grid[:, np.newaxis]) * (1 - eta * outsidePolicy)
         new_state = new_weight_a / (new_weight_a + new_weight_b)
         future_u = beta * interp_v_func(new_state)
 
@@ -72,7 +71,7 @@ def value_it_fixedComp(s_grid_,
 
 def value_it_stratComp(s_grid,
                         p_grid,
-                        nu=0.2,
+                        eta=0.1,
                         beta=0.95,
                         max_iterations=2000):
     """
@@ -96,9 +95,8 @@ def value_it_stratComp(s_grid,
         interp_v_func = interp1d(s_grid, v_curr, kind='linear', fill_value='extrapolate')
         p_curr_b = p_curr[::-1]
 
-        new_weight_a = s_grid[:, np.newaxis] * (1 - (nu * p_grid))
-        new_weight_b = np.tile(np.multiply((1 - (nu * p_curr_b)),(1 - s_grid[:, np.newaxis]).T).T,len(p_grid))
-        #new_weight_b = new_weight_a[::-1]
+        new_weight_a = s_grid[:, np.newaxis] * (1 - (eta * p_grid))
+        new_weight_b = np.tile(np.multiply((1 - (eta * p_curr_b)),(1 - s_grid[:, np.newaxis]).T).T,len(p_grid))
 
         new_state = new_weight_a / (new_weight_a + new_weight_b)
         future_u = beta * interp_v_func(new_state)
@@ -117,6 +115,53 @@ def value_it_stratComp(s_grid,
             print('did not terminate after ' + str(it) + ' iterations')
 
     return {'value_function': v_curr.tolist(), 'policy_function': p_curr.tolist()}
+
+
+
+
+def simulate_mw_bertrand(
+    policy_function1,
+    policy_function2,
+    rounds = 40,
+    starting_share_player_1 = 0.1):
+    """
+    """
+    
+    price_transcript1 = [-1 for i in range(rounds)]
+    price_transcript2 = [-1 for i in range(rounds)]
+    state_transcript1 = [-1 for i in range(rounds)]
+    state_transcript2 = [-1 for i in range(rounds)]
+    state_transcript1[0] = starting_share_player_1
+    state_transcript2[0] = 1-starting_share_player_1
+    time_transcript = [1+i for i in range(rounds)]
+
+    weights = np.array([starting_share_player_1,1-starting_share_player_1])
+
+
+    #intialise multiplicate weights for consumer
+    mw = Mw(weights = weights)
+
+    for r in range(rounds):
+            share_player_1 = mw.weights[0] / sum(mw.weights)
+            share_player_2 = mw.weights[1] / sum(mw.weights)
+            price_player_1 = policy_function1(share_player_1)
+            price_player_2 = policy_function2(share_player_2)
+            price_vector = [price_player_1,price_player_2]
+            mw.update(price_vector)
+            #update arrays
+            price_transcript1[r] = price_player_1
+            state_transcript1[r] = share_player_1
+            price_transcript2[r] = price_player_2
+            state_transcript2[r] = share_player_2
+
+    return( {'time': time_transcript,
+             'price1' : price_transcript1,
+             'price2' : price_transcript2,
+             'share1' : state_transcript1,
+             'share2' : state_transcript2
+             })
+
+
 
 
 
