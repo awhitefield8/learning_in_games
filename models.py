@@ -4,15 +4,15 @@ class Mw:
     """
     multiplicative weights object
     """
-    def __init__(self, n=2, nu=0.2,weights=None):
+    def __init__(self, n=2, eta_rate=0.2,weights=None):
         """
         Args,
             n (int): number of experts
-            nu (float): learning rate
+            eta_rate (float): learning rate
             weights (np.array): array of weights
         """
         self.n = n
-        self.nu = nu
+        self.eta_rate = eta_rate
         if weights is None:
             self.weights = np.full(n, 1/n)
         else:
@@ -24,7 +24,7 @@ class Mw:
             c (list): cost vector
         """
         cost_array = np.array(c)
-        self.weights *= 1 - self.nu * cost_array
+        self.weights *= 1 - self.eta_rate * cost_array
         self.weights /= np.sum(self.weights)
 
 
