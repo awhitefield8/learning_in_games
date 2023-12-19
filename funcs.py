@@ -4,21 +4,6 @@ from scipy.interpolate import interp1d #functional interpolation
 from models import Mw
 
 
-
-def inverse_mw(new_weight,old_weight,nu=0.1):
-    """
-    Args:
-        new_weight: new weight
-        old_weight: initial weight
-        cost: cost
-        nu: learning rate
-    Returns:
-        cost required to generate new weight
-    """
-    return (1 - (new_weight/old_weight))/nu
-
-
-
 ### value iteration functions
 
 def value_it_fixedComp(s_grid_,
